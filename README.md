@@ -162,6 +162,75 @@ Para excluir um grupo, deve-se adotar o comando "removeGroup" seguido do <nome d
 @marciocosta>>
 ```
 O efeito do comando "removeGroup" deve ser refletido no RabbitMQ como a exclusão do respectivo exchange.
-  
+
+### Envio de arquivos
+
+O chat deve disponibilizar o comando "upload" para permitir que um usuário envie arquivos (de qualquer tipo) para um usuário ou grupo corrente. 
+
+Exemplo do envio do arquivo "aula1.pdf" para o usuário "marciocosta":
+
+```
+@marciocosta>> !upload /home/tarcisio/aula1.pdf
+```
+O envio de arquivos para um grupo deve ser semelhante:
+
+```
+#ufs>> !upload /home/tarcisio/aula1.pdf
+```
+Logo depois de chamado o comando "upload", deve ser exibida a mensagem (não bloqueante) 'Uploading file "<nome-do-arquivo>"...'. Exemplo:
+
+```
+@marciocosta>> !upload /home/tarcisio/aula1.pdf
+Uploading file "/home/tarcisio/aula1.pdf" to @marciocosta...
+@marciocosta>>
+```
+Observe também que no exemplo acima, logo depois de exibida a mensagem 'Uploading file "/home/tarcisio/aula1.pdf"...' o chat volta instantaneamente para o prompt (ex: "@marciocosta>> "), ou seja, o processo de envio de arquivos com o comando "upload" deve ser feita em background (sem bloquear o chat). Para que isso seja possível, é necessário criar uma thread no chat emissor para cada novo upload. Também pode ser necessário criar uma fila específica para o recebimento de arquivos para cada usuário. Com isso, cada usuário teria uma fila para o recebimento de mensagens de texto e outra para o recebimento de arquivos.
+
+Depois que o arquivo for transferido do chat emissor para o servidor do RabbitMQ, deve ser exibida a mensagem 'File "<nome-do-arquivo>" is now available to @<id-do-receptor>" Exemplo:
+
+```
+File "/home/tarcisio/aula1.pdf" is available to @marciocosta !
+```
+O lado receptor do chat, deve receber o arquivo também em background sem bloqueios. É realizado automaticamente o download de arquivos a serem recebidos em uma pasta default (ex: /home/tarcisio/chat/downloads). Quando um download for completado, deve ser exibida a mensagem 'File <nome-do-arquivo> from @<id-do-emissor> downloaded!' no lado receptor. Exemplo: 
+
+```
+File "aula1.pdf" from @tarcisio downloaded!
+```
+
+### Listar todos os usuários
+
+O chat deve disponibilizar operação para listar todos os uauários do chat. Ex:
+
+```
+@marciocosta>> !listUsers
+tarcisio, marciocosta, faviosantos, monicaferraz
+@marciocosta>> 
+```
+Para implementar essa operação, deve-se usar a API HTTP de Gerenciamento do RabbitMQ: https://cdn.rawgit.com/rabbitmq/rabbitmq-management/v3.7.3/priv/www/api/index.html
+
+### Listar todos os grupos
+
+O chat deve disponibilizar operação para listar todos os grupos dos quais o usuário (que está chamando a operação) faz parte. Ex:
+
+```
+@marciocosta>> !listGroup
+ufs, amigos, familia
+@marciocosta>> 
+```
+Para implementar essa operação, deve-se usar a API HTTP de Gerenciamento do RabbitMQ: https://cdn.rawgit.com/rabbitmq/rabbitmq-management/v3.7.3/priv/www/api/index.html
+
+
+## Replicação do servidor RabbitMQ visando alta disponibilidade
+
+O servidor RabbitMQ possui um recurso de clusterização onde pode-se configurar diversas instâncias diferentes do RabbitMQ Server para trabalharem em conjunto oferecendo um serviço único. Para esse trabalho, devem ser criadas três instâncias do RabbitMQ configuradas como cluster. Deve-se configurar as instâncias de modo que elas repliquem todas as filas entre elas. Com isso, se uma instância cair, o serviço do RabbitMQ e as filas permanecerão disponíveis.
+
+Para isso, deve-se pesquisar a documentação do RabbitMQ em:
+
+* https://www.rabbitmq.com/clustering.html
+* https://www.rabbitmq.com/ha.html
+
+## Repositório base para o trabalho
+
+Esse trabalho deve ser feito a partir do seguinte repositório base:
 
 https://classroom.github.com/a/7G_WRqkb
